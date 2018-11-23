@@ -1,0 +1,56 @@
+{
+  "project_info": {
+    "project_number": "29338174656",
+    "firebase_url": "https://arkq-f4dc7.firebaseio.com",
+    "project_id": "arkq-f4dc7",
+    "storage_bucket": "arkq-f4dc7.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:29338174656:android:f5fb63112af911d9",
+        "android_client_info": {
+          "package_name": "me.pjookim.arkq"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "29338174656-6105bqit91sfc499hgdfgr5m518hea82.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "me.pjookim.arkq",
+            "certificate_hash": "57c26e95c19385206188ffae14bbbf37bb0768df"
+          }
+        },
+        {
+          "client_id": "29338174656-qpdulcprmn5jgij9het46rvhpa7v602d.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCGhHW1bgpEtFFfDRBXVHR3YWA6Ny59z2w"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "29338174656-qpdulcprmn5jgij9het46rvhpa7v602d.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      },
+      "admob_app_id": "ca-app-pub-8885000207073232~9538840339"
+    }
+  ],
+  "configuration_version": "1"
+}
