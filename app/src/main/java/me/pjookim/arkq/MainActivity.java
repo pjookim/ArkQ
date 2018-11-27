@@ -1,16 +1,16 @@
 package me.pjookim.arkq;
 
-import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
-import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -19,34 +19,39 @@ import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdSize;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.MobileAds;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.gson.JsonObject;
 
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
-
-import java.io.IOException;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 public class MainActivity extends AppCompatActivity {
 
     AlertDialog.Builder builder;
+    String[] serverName = {"루페온", "이그하람", "기에나", "시리우스", "크라테르", "프로키온", "알데바란", "아크투르스", "안타레스", "베아트리스", "에버그레이스"};
+    CoordinatorLayout coordinatorLayout;
     private RecyclerView recyclerView;
     private ArrayList<ItemObject> list = new ArrayList();
     private SwipeRefreshLayout swipeRefreshLayout;
@@ -54,15 +59,16 @@ public class MainActivity extends AppCompatActivity {
     private AdView mAdView;
     private TextView realTimeText;
     private DatabaseReference androidRef;
-    //데이터 배열 선언
-    private ArrayList<ItemObject> mList;
+    private Boolean backKeyPressed = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Intent intent = new Intent(this, SplashActivity.class);
+        coordinatorLayout = (CoordinatorLayout) findViewById(R.id.coordinator);
+
+        final Intent intent = new Intent(this, SplashActivity.class);
         startActivity(intent);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -137,10 +143,10 @@ public class MainActivity extends AppCompatActivity {
         swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                new Description().execute();
+                getServerList();
             }
         });
-        new Description().execute();
+        getServerList();
 
         mAdView.setAdListener(new AdListener() {
             @Override
@@ -170,6 +176,20 @@ public class MainActivity extends AppCompatActivity {
                 // to the app after tapping on an ad.
             }
         });
+
+        final EditText searchCharacter = (EditText) findViewById(R.id.search_char);
+        ImageView searchButton = (ImageView) findViewById(R.id.search_button);
+        searchButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(MainActivity.this, SearchCharacter.class);
+                if (searchCharacter.getText().length() > 0) {
+                    intent.putExtra("character", searchCharacter.getText().toString());
+                    Log.i("a", searchCharacter.getText().toString());
+                    startActivity(intent);
+                }
+            }
+        });
     }
 
     @Override
@@ -179,69 +199,56 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
-    private class Description extends AsyncTask<Void, Void, Void> {
-        private ProgressDialog progressDialog;
+    private void getServerList() {
+        list.clear();
+        Retrofit retrofit = new Retrofit.Builder().addConverterFactory(GsonConverterFactory.create())
+                .baseUrl(ServerQueue.BASEURL)
+                .build();
+        ServerQueue apiService = retrofit.create(ServerQueue.class);
+        Call<JsonObject> call = apiService.getQueue("get");
+        call.enqueue(new Callback<JsonObject>() {
+            @Override
+            public void onResponse(@NonNull Call<JsonObject> call, @NonNull Response<JsonObject> response) {
+                if (response.isSuccessful()) {
+                    JsonObject object = response.body();
+                    if (object != null) {
+                        for (int i = 1; i < 12; i++) {
+                            list.add(new ItemObject(serverName[i - 1], Integer.parseInt(object.get("s" + String.valueOf(i)).toString()), i));
+                        }
+                        MyAdapter myAdapter = new MyAdapter(list);
+                        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getApplicationContext());
+                        recyclerView.setLayoutManager(layoutManager);
+                        recyclerView.setAdapter(myAdapter);
 
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-
-            progressDialog = new ProgressDialog(MainActivity.this);
-            progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-            progressDialog.setMessage("잠시 기다려 주세요.");
-            progressDialog.show();
-            list.clear();
-        }
-
-        @Override
-        protected Void doInBackground(Void... params) {
-            try {
-                Document doc = Jsoup.connect("http://loaq.kr/").get();
-                Elements mElementDataSize = doc.select("div[class=status]").select("dl");
-                int mElementSize = mElementDataSize.size();
-                int serverId = 1;
-
-                for (Element elem : mElementDataSize) {
-                    String server_title = elem.select("dt").text().replaceAll(" ", "");
-                    String queue = elem.select("dd[class=cnt] > span:first-child").text().replaceAll(" ", "");
-                    String status;
-                    Log.d("test", server_title + " " + queue);
-                    if (server_title.contains("서버")) {
-                        // 갖다버려;
-                        Log.d("test", "잘 갖다버렸는지 확인");
-                    } else if (server_title.isEmpty() || queue.isEmpty()) {
-                        // 갖다버려;
-                        Log.d("test", "잘 갖다버렸는지 확인");
-                    } else {
-                        Double doubleQueue = (Double.parseDouble(queue) * 1.034);
-                        int intQueue = (int) Math.round(doubleQueue);
-                        list.add(new ItemObject(server_title, intQueue, serverId));
-                        serverId++;
+                        long now = System.currentTimeMillis();
+                        Date date = new Date(now);
+                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                        String getTime = sdf.format(date);
+                        realTimeText.setText(getTime + " 기준");
+                        swipeRefreshLayout.setRefreshing(false);
                     }
                 }
-                //Log.d("debug :", "List " + mElementDataSize);
-            } catch (IOException e) {
-                e.printStackTrace();
             }
-            return null;
-        }
 
-        @Override
-        protected void onPostExecute(Void result) {
-            //ArraList를 인자로 해서 어답터와 연결한다.
-            MyAdapter myAdapter = new MyAdapter(list);
-            RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getApplicationContext());
-            recyclerView.setLayoutManager(layoutManager);
-            recyclerView.setAdapter(myAdapter);
+            @Override
+            public void onFailure(@NonNull Call<JsonObject> call, @NonNull Throwable t) {
+            }
+        });
+    }
 
-            progressDialog.dismiss();
-            swipeRefreshLayout.setRefreshing(false);
-
-            long now = System.currentTimeMillis();
-            Date date = new Date(now);
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            String getTime = sdf.format(date);
-            realTimeText.setText(getTime + " 기준");
+    @Override
+    public void onBackPressed() {
+        if (backKeyPressed) {
+            finish(); // finish activity
+        } else {
+            Snackbar.make(coordinatorLayout, "'뒤로' 버튼을 한번 더 누르시면 종료됩니다.", Snackbar.LENGTH_LONG).show();
+            backKeyPressed = true;
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    backKeyPressed = false;
+                }
+            }, 3 * 1000);
         }
     }
 
@@ -270,7 +277,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.row_data, parent, false);
+            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.queue_row_data, parent, false);
             return new ViewHolder(view);
         }
 
@@ -280,16 +287,16 @@ public class MainActivity extends AppCompatActivity {
             DecimalFormat formatter = new DecimalFormat("#,###,###");
             String formattedQueue = formatter.format(mList.get(position).getQueue());
             holder.queue.setText(formattedQueue);
-//            holder.listItem.setOnClickListener(new View.OnClickListener() {
-//                @Override
-//                public void onClick(View view) {
-//                    Intent intent = new Intent(MainActivity.this, ServerDetailActivity.class);
-//                    intent.putExtra("serverId", String.valueOf(mList.get(position).getId()));
-//                    intent.putExtra("serverName", String.valueOf(mList.get(position).getServer()));
-//                    Log.d("serverId", String.valueOf(mList.get(position).getId()));
-//                    startActivity(intent);
-//                }
-//            });
+            holder.listItem.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Intent intent = new Intent(MainActivity.this, ServerDetailActivity.class);
+                    intent.putExtra("serverId", String.valueOf(mList.get(position).getId()));
+                    intent.putExtra("serverName", String.valueOf(mList.get(position).getServer()));
+                    Log.d("serverId", String.valueOf(mList.get(position).getId()));
+                    startActivity(intent);
+                }
+            });
             int nQueue = mList.get(position).getQueue();
             if (nQueue > 3000) {
                 holder.status.setText("혼잡");
@@ -308,4 +315,5 @@ public class MainActivity extends AppCompatActivity {
             return mList.size();
         }
     }
+
 }

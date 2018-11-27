@@ -8,7 +8,7 @@ import java.util.Map;
 
 @IgnoreExtraProperties
 public class Queue implements Serializable {
-    String s1, s2, s3, s4, s5, s6, s7, s8, s9;
+    String s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11;
 
     public String getS1() {
         return s1;
@@ -80,5 +80,21 @@ public class Queue implements Serializable {
 
     public void setS9(String s9) {
         this.s9 = s9;
+    }
+
+    public String getS10() {
+        return s10;
+    }
+
+    public void setS10(String s10) {
+        this.s10 = s10;
+    }
+
+    public String getS11() {
+        return s11;
+    }
+
+    public void setS11(String s11) {
+        this.s11 = s11;
     }
 }

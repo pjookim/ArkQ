@@ -1,6 +1,5 @@
 package me.pjookim.arkq;
 
-import android.content.Intent;
 import android.graphics.Color;
 import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -42,7 +41,7 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
     @NonNull
     @Override
     public MyAdapter.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.row_data, parent, false);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.queue_row_data, parent, false);
         return new ViewHolder(view);
     }
 

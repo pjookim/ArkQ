@@ -47,10 +47,10 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-                android:id="@+id/container"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
+            <!--<androidx.swiperefreshlayout.widget.SwipeRefreshLayout-->
+                <!--android:id="@+id/container"-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="match_parent">-->
 
                 <RelativeLayout
                     android:layout_width="match_parent"
@@ -142,7 +142,94 @@
                                         android:id="@+id/chart"
                                         android:layout_width="match_parent"
                                         android:layout_height="300dp"
-                                        android:layout_marginBottom="24dp"/>
+                                        android:layout_marginBottom="24dp" />
+
+                                </LinearLayout>
+
+                            </com.google.android.material.card.MaterialCardView>
+
+                            <com.google.android.material.card.MaterialCardView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:clickable="true"
+                                android:foreground="?attr/selectableItemBackground"
+                                app:cardCornerRadius="20dp"
+                                app:cardElevation="10dp"
+                                app:cardUseCompatPadding="true">
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:orientation="vertical">
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginLeft="24dp"
+                                        android:layout_marginTop="24dp"
+                                        android:text="타이머"
+                                        android:textAppearance="@style/TextAppearance.MaterialComponents.Headline5"
+                                        android:textColor="#555555" />
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginLeft="24dp"
+                                        android:layout_marginTop="8dp"
+                                        android:layout_marginRight="24dp"
+                                        android:layout_marginBottom="24dp"
+                                        android:text="기계학습 자체분석 알고리즘에 따라 게임 플레이 시작 시간에 따른 접속 시간을 추천해주는 기능입니다."
+                                        android:textColor="#555555"
+                                        android:textSize="12sp" />
+
+                                    <TimePicker
+                                        android:id="@+id/timepicker"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"></TimePicker>
+
+                                    <LinearLayout
+                                        android:id="@+id/result_layout"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:orientation="vertical"
+                                        android:visibility="gone">
+
+                                        <View
+                                            android:layout_width="match_parent"
+                                            android:layout_height="0.7dp"
+                                            android:layout_alignParentTop="true"
+                                            android:layout_marginLeft="16dp"
+                                            android:layout_marginRight="16dp"
+                                            android:background="#ededed" />
+
+                                        <TextView
+                                            android:id="@+id/result_time"
+                                            android:layout_width="match_parent"
+                                            android:layout_height="wrap_content"
+                                            android:layout_marginTop="24dp"
+                                            android:layout_marginBottom="24dp"
+                                            android:gravity="center"
+                                            android:textAppearance="@style/TextAppearance.MaterialComponents.Headline2" />
+
+                                        <androidx.appcompat.widget.AppCompatButton
+                                            android:id="@+id/alarm"
+                                            android:layout_width="match_parent"
+                                            android:layout_height="wrap_content"
+                                            android:layout_marginLeft="16dp"
+                                            android:layout_marginRight="16dp"
+                                            android:layout_marginBottom="16dp"
+                                            android:text="알람 설정" />
+
+                                    </LinearLayout>
+
+                                    <androidx.appcompat.widget.AppCompatButton
+                                        android:id="@+id/calculate"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginLeft="16dp"
+                                        android:layout_marginRight="16dp"
+                                        android:layout_marginBottom="16dp"
+                                        android:text="시간 계산" />
 
                                 </LinearLayout>
 
@@ -154,7 +241,7 @@
 
                 </RelativeLayout>
 
-            </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+            <!--</androidx.swiperefreshlayout.widget.SwipeRefreshLayout>-->
 
             <com.google.android.gms.ads.AdView xmlns:ads="http://schemas.android.com/apk/res-auto"
                 android:id="@+id/adView"
