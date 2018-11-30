@@ -4,14 +4,14 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.VIBRATE"/>
-    <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application
         android:allowBackup="true"
+        android:hardwareAccelerated="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:hardwareAccelerated="true"
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true">
@@ -29,20 +29,26 @@
 
         <activity
             android:name=".SplashActivity"
-            android:theme="@style/SplashTheme" />
-
+            android:theme="@style/SplashTheme"
+            android:windowSoftInputMode="stateHidden" />
         <activity
             android:name=".ServerDetailActivity"
-            android:theme="@style/AppTheme" />
+            android:theme="@style/AppTheme"
+            android:windowSoftInputMode="stateHidden" />
         <activity
-            android:name=".SearchCharacter"
-            android:theme="@style/AppTheme" />
-        <receiver android:name=".AlarmReceiver" android:exported="true">
+            android:name=".SearchCharacterActivity"
+            android:theme="@style/AppTheme"
+            android:windowSoftInputMode="stateHidden" />
+
+        <receiver
+            android:name=".AlarmReceiver"
+            android:exported="true">
             <intent-filter>
-                <action android:name="AlarmReceiver" >
-                </action>
+                <action android:name="AlarmReceiver"></action>
             </intent-filter>
         </receiver>
+
+        <activity android:name=".SetMajorCharacterActivity"></activity>
     </application>
 
 </manifest>

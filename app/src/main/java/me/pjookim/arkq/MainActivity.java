@@ -2,17 +2,22 @@ package me.pjookim.arkq;
 
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
@@ -26,16 +31,26 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.gson.JsonObject;
+import com.robinhood.ticker.TickerUtils;
+import com.robinhood.ticker.TickerView;
 
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
+import java.io.IOException;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.cardview.widget.CardView;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -61,12 +76,106 @@ public class MainActivity extends AppCompatActivity {
     private DatabaseReference androidRef;
     private Boolean backKeyPressed = false;
 
+    CardView noSetCharacter;
+    CardView characterProfileCard;
+    CardView adCard;
+    CardView noCharacterCard;
+    CardView rankingCard;
+
+    String character;
+    String nickname;
+    String charClass;
+    String itemLevel;
+    String expeditionLevel;
+    String pvpLevel;
+    TextView rankText;
+    TextView nicknameText;
+    TextView itemText;
+    TextView expeditionText;
+    TextView pvpText;
+    String resultRank;
+    ImageView profileImage;
+    RecyclerView basicAbilityView;
+    RecyclerView battleAbilityView;
+    Boolean isUser;
+    ImageView rankImage;
+
+    ImageView aboutRank;
+    TickerView rank1;
+    TickerView rank2;
+
+    Retrofit retrofit;
+    CharacterRank apiService;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        rankText = (TextView) findViewById(R.id.rank_name);
+        rankImage = (ImageView) findViewById(R.id.rank_image);
+
+        aboutRank = (ImageView) findViewById(R.id.about_rank);
+        aboutRank.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                AboutRankDialog customDialog = new AboutRankDialog(MainActivity.this);
+                customDialog.callFunction();
+            }
+        });
+
+        rankingCard = (CardView) findViewById(R.id.ranking);
+
+        rank1 = findViewById(R.id.rank1);
+        rank1.setCharacterLists(TickerUtils.provideNumberList());
+
+        rank1.setText("0");
+        rank2 = findViewById(R.id.rank2);
+        rank2.setCharacterLists(TickerUtils.provideNumberList());
+        rank2.setText("%");
+
+        swipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.container);
+        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                new Character().execute();
+            }
+        });
+
+        characterProfileCard = (CardView) findViewById(R.id.character_profile);
+
+        profileImage = (ImageView) findViewById(R.id.profile_image);
+        nicknameText = (TextView) findViewById(R.id.nickname);
+
+        itemText = (TextView) findViewById(R.id.item);
+        expeditionText = (TextView) findViewById(R.id.expedition);
+        pvpText = (TextView) findViewById(R.id.pvp);
+
+
+
         coordinatorLayout = (CoordinatorLayout) findViewById(R.id.coordinator);
+
+        noSetCharacter = (CardView) findViewById(R.id.no_set_character);
+
+        characterProfileCard = (CardView) findViewById(R.id.character_profile);
+        rankingCard = (CardView) findViewById(R.id.ranking);
+
+        noSetCharacter.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent  = new Intent(MainActivity.this, SetMajorCharacterActivity.class);
+                startActivity(intent);
+            }
+        });
+
+        SharedPreferences pref = getSharedPreferences("majorCharacter", MODE_PRIVATE);
+        character = pref.getString("characterName", null);
+
+        if(character != null) {
+            new Character().execute();
+            noSetCharacter.setVisibility(View.GONE);
+        } else {
+        }
 
         final Intent intent = new Intent(this, SplashActivity.class);
         startActivity(intent);
@@ -75,15 +184,6 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayShowTitleEnabled(false);
         getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_more_vert_black_24dp);
-
-//        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-//        fab.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-//                        .setAction("Action", null).show();
-//            }
-//        });
 
         realTimeText = (TextView) findViewById(R.id.realtime_time);
 
@@ -148,6 +248,12 @@ public class MainActivity extends AppCompatActivity {
         });
         getServerList();
 
+        retrofit = new Retrofit.Builder()
+                .addConverterFactory(GsonConverterFactory.create())
+                .baseUrl(CharacterRank.BASEURL)
+                .build();
+        apiService = retrofit.create(CharacterRank.class);
+
         mAdView.setAdListener(new AdListener() {
             @Override
             public void onAdLoaded() {
@@ -182,12 +288,31 @@ public class MainActivity extends AppCompatActivity {
         searchButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(MainActivity.this, SearchCharacter.class);
+                Intent intent = new Intent(MainActivity.this, SearchCharacterActivity.class);
                 if (searchCharacter.getText().length() > 0) {
                     intent.putExtra("character", searchCharacter.getText().toString());
                     Log.i("a", searchCharacter.getText().toString());
                     startActivity(intent);
                 }
+            }
+        });
+
+        searchCharacter.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                switch (actionId) {
+                    case EditorInfo.IME_ACTION_SEARCH:
+                        Intent intent = new Intent(MainActivity.this, SearchCharacterActivity.class);
+                        if (searchCharacter.getText().length() > 0) {
+                            intent.putExtra("character", searchCharacter.getText().toString());
+                            Log.i("a", searchCharacter.getText().toString());
+                            startActivity(intent);
+                        }
+                        break;
+                    default:
+                        return false;
+                }
+                return true;
             }
         });
     }
@@ -314,6 +439,167 @@ public class MainActivity extends AppCompatActivity {
         public int getItemCount() {
             return mList.size();
         }
+    }
+
+    private class Character extends AsyncTask<Void, Void, Void> {
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            swipeRefreshLayout.setRefreshing(true);
+        }
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            try {
+                Document doc = Jsoup.connect("http://lostark.game.onstove.com/Profile/Character/" + character).get();
+                Elements profileCharacter = doc.select("div[class=profile-character]");
+                if (!profileCharacter.isEmpty()) {
+                    isUser = true;
+                    nickname = profileCharacter.select("h3").text();
+                    Log.i("nickname", nickname);
+                    charClass = profileCharacter.select("div[class=game-info__class] > span").get(1).text();
+                    Log.i("class", charClass);
+                    itemLevel = profileCharacter.select("div[class=level-info__item] > span").get(1).text();
+                    Log.i("itemLevel", itemLevel);
+                    expeditionLevel = profileCharacter.select("div[class=level-info__expedition] > span").get(1).text();
+                    Log.i("expeditionLevel", expeditionLevel);
+                    pvpLevel = profileCharacter.select("div[class=level-info__pvp] > span").get(1).text();
+                    Log.d("profileCharacter", profileCharacter.toString());
+                } else {
+                    Log.d("이건 없음", "ㅇㅇㅠㅠ");
+                    isUser = false;
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void result) {
+            if (isUser) {
+                Call<JsonObject> call = apiService.getRanking(nickname, itemLevel.substring(3));
+                call.enqueue(new Callback<JsonObject>() {
+                    @Override
+                    public void onResponse(@NonNull Call<JsonObject> call, @NonNull Response<JsonObject> response) {
+                        if (response.isSuccessful()) {
+                            JsonObject object = response.body();
+                            if (object != null) {
+                                resultRank = object.get("rank").toString().replaceAll("\"", "");
+                                if(!resultRank.equals("-1")) {
+                                    String[] data = resultRank.split("\\.");
+                                    rank1.setText(data[0]);
+                                    rank2.setText("." + data[1] + "%");
+                                    if (Integer.parseInt(data[0]) < 2) {
+                                        rankText.setText("다이아");
+                                        rankImage.setImageDrawable(getResources().getDrawable(R.drawable.dia));
+                                    } else if (Integer.parseInt(data[0]) < 8) {
+                                        rankText.setText("플래티넘");
+                                        rankImage.setImageDrawable(getResources().getDrawable(R.drawable.platinum));
+                                    } else if (Integer.parseInt(data[0]) < 30) {
+                                        rankText.setText("골드");
+                                        rankImage.setImageDrawable(getResources().getDrawable(R.drawable.gold));
+                                    } else if (Integer.parseInt(data[0]) < 60) {
+                                        rankText.setText("실버");
+                                        rankImage.setImageDrawable(getResources().getDrawable(R.drawable.silver));
+                                    } else {
+                                        rankText.setText("브론즈");
+                                        rankImage.setImageDrawable(getResources().getDrawable(R.drawable.bronze));
+                                    }
+                                    rankingCard.setVisibility(View.VISIBLE);
+                                }
+                                swipeRefreshLayout.setRefreshing(false);
+
+                            }
+                            Log.i("rank", resultRank);
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(@NonNull Call<JsonObject> call, @NonNull Throwable t) {
+                        Log.i("아 제발ㅠㅠ", t.toString());
+                    }
+                });
+
+                nicknameText.setText(nickname);
+                itemText.setText(itemLevel);
+                expeditionText.setText(expeditionLevel);
+                pvpText.setText(pvpLevel);
+                switch (charClass) {
+                    case "기공사": {
+                        profileImage.setImageDrawable(getResources().getDrawable(R.drawable.c1));
+                        break;
+                    }
+                    case "데빌헌터": {
+                        profileImage.setImageDrawable(getResources().getDrawable(R.drawable.c2));
+                        break;
+                    }
+                    case "디스트로이어": {
+                        Log.i("디스트로이어", "ㅇㅇㅇ");
+                        profileImage.setImageDrawable(getResources().getDrawable(R.drawable.c3));
+                        break;
+                    }
+                    case "바드": {
+                        profileImage.setImageDrawable(getResources().getDrawable(R.drawable.c4));
+                        break;
+                    }
+                    case "배틀마스터": {
+                        profileImage.setImageDrawable(getResources().getDrawable(R.drawable.c5));
+                        break;
+                    }
+                    case "버서커": {
+                        profileImage.setImageDrawable(getResources().getDrawable(R.drawable.c6));
+                        break;
+                    }
+                    case "블래스터": {
+                        profileImage.setImageDrawable(getResources().getDrawable(R.drawable.c7));
+                        break;
+                    }
+                    case "서머너": {
+                        profileImage.setImageDrawable(getResources().getDrawable(R.drawable.c8));
+                        break;
+                    }
+                    case "아르카나": {
+                        profileImage.setImageDrawable(getResources().getDrawable(R.drawable.c9));
+                        break;
+                    }
+                    case "워로드": {
+                        profileImage.setImageDrawable(getResources().getDrawable(R.drawable.c10));
+                        break;
+                    }
+                    case "인파이터": {
+                        profileImage.setImageDrawable(getResources().getDrawable(R.drawable.c11));
+                        break;
+                    }
+                    case "호크아이": {
+                        profileImage.setImageDrawable(getResources().getDrawable(R.drawable.c12));
+                        break;
+                    }
+                    default: {
+                        Log.i("띠용", "엥 이러면 안돼ㅠㅠ");
+                    }
+                }
+                characterProfileCard.setVisibility(View.VISIBLE);
+            } else {
+                noCharacterCard.setVisibility(View.VISIBLE);
+                swipeRefreshLayout.setRefreshing(false);
+            }
+            //ArraList를 인자로 해서 어답터와 연결한다.
+//            MyAdapter myAdapter = new MyAdapter(list);
+//            RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getApplicationContext());
+//            recyclerView.setLayoutManager(layoutManager);
+//            recyclerView.setAdapter(myAdapter);
+//
+            //Glide.with(SearchCharacterActivity.this).load("http://arkq.cafe24app.com/icons/" + charClass + ".png").into(profileImage);
+//
+//            long now = System.currentTimeMillis();
+//            Date date = new Date(now);
+//            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+//            String getTime = sdf.format(date);
+//            realTimeText.setText(getTime + " 기준");
+        }
+
     }
 
 }

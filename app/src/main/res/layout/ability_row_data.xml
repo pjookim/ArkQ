@@ -29,20 +29,27 @@
                 android:id="@+id/ability"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
+                android:layout_weight="2"
                 android:gravity="center"
                 android:text="힘"
-                android:textColor="#e4ba27"
+                android:textColor="#6046c7"
                 android:textSize="16sp" />
 
             <TextView
                 android:id="@+id/value"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
+                android:layout_weight="2"
                 android:gravity="center"
                 android:text="915"
                 android:textSize="16sp" />
+
+            <ImageView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:src="@drawable/ic_navigate_24dp"
+                android:tint="#aaaaaa"/>
 
         </LinearLayout>
 

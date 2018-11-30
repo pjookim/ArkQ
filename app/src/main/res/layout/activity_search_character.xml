@@ -5,7 +5,9 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#f7f7f9"
-    tools:context=".MainActivity">
+    tools:context=".MainActivity"
+    android:focusable="true"
+    android:focusableInTouchMode="true">
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
@@ -47,322 +49,169 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <RelativeLayout
+            <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+                android:id="@+id/container"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
 
-                <androidx.core.widget.NestedScrollView
+                <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent">
 
-                    <LinearLayout
+                    <androidx.core.widget.NestedScrollView
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:orientation="vertical"
-                        android:paddingBottom="50dp">
+                        android:layout_height="match_parent">
 
-                        <com.google.android.material.card.MaterialCardView
+                        <LinearLayout
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:clickable="true"
-                            android:foreground="?attr/selectableItemBackground"
-                            app:cardCornerRadius="20dp"
-                            app:cardElevation="10dp"
-                            android:layout_marginTop="16dp"
-                            android:layout_marginLeft="16dp"
-                            android:layout_marginRight="16dp"
-                            android:layout_marginBottom="16dp">
+                            android:layout_height="match_parent"
+                            android:orientation="vertical"
+                            android:paddingBottom="50dp">
 
-                            <LinearLayout
+                            <include layout="@layout/card_character_search" />
+
+                            <include layout="@layout/card_character_profile" />
+
+                            <include layout="@layout/card_no_character" />
+
+                            <include layout="@layout/card_character_ranking" />
+
+                            <com.google.android.material.card.MaterialCardView
+                                android:id="@+id/ad_card"
                                 android:layout_width="match_parent"
-                                android:layout_height="match_parent"
-                                android:orientation="vertical">
+                                android:layout_height="wrap_content"
+                                android:layout_marginLeft="16dp"
+                                android:layout_marginRight="16dp"
+                                android:layout_marginBottom="16dp"
+                                android:clickable="true"
+                                android:foreground="?attr/selectableItemBackground"
+                                android:visibility="gone"
+                                app:cardCornerRadius="20dp"
+                                app:cardElevation="10dp">
 
-                                <LinearLayout
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:orientation="horizontal">
-
-                                    <EditText
-                                        android:layout_marginTop="14dp"
-                                        android:layout_marginBottom="14dp"
-                                        android:layout_marginLeft="24dp"
-                                        android:background="@null"
-                                        android:id="@+id/search_char"
-                                        android:textSize="19sp"
-                                        android:hint="캐릭터명을 입력해주세요"
-                                        android:layout_width="0dp"
-                                        android:layout_height="wrap_content"
-                                        android:layout_weight="7"
-                                        android:textColor="#444444"
-                                        android:singleLine="true"/>
-
-                                    <ImageView
-                                        android:layout_marginTop="12dp"
-                                        android:layout_marginBottom="8dp"
-                                        android:layout_marginRight="16dp"
-                                        android:id="@+id/search_button"
-                                        android:layout_width="0dp"
-                                        android:layout_height="28dp"
-                                        android:layout_weight="1"
-                                        android:src="@drawable/ic_search_24dp"/>
-
-                                </LinearLayout>
-
-                            </LinearLayout>
-
-                        </com.google.android.material.card.MaterialCardView>
-
-                        <com.google.android.material.card.MaterialCardView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:clickable="true"
-                            android:foreground="?attr/selectableItemBackground"
-                            app:cardCornerRadius="20dp"
-                            app:cardElevation="10dp"
-                            android:layout_marginLeft="16dp"
-                            android:layout_marginRight="16dp"
-                            android:layout_marginBottom="16dp">
-
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="match_parent"
-                                android:orientation="vertical">
-
-                                <LinearLayout
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:layout_gravity="center_vertical"
-                                    android:gravity="center_vertical"
-                                    android:orientation="horizontal">
-
-                                    <de.hdodenhof.circleimageview.CircleImageView
-                                        xmlns:app="http://schemas.android.com/apk/res-auto"
-                                        android:id="@+id/profile_image"
-                                        android:layout_marginLeft="16dp"
-                                        android:layout_marginTop="16dp"
-                                        android:layout_marginBottom="16dp"
-                                        android:layout_width="64dp"
-                                        android:layout_height="64dp"
-                                        android:src="@mipmap/ic_launcher" />
-
-                                    <TextView
-                                        android:id="@+id/nickname"
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:layout_marginLeft="16dp"
-                                        android:layout_marginTop="24dp"
-                                        android:layout_marginBottom="24dp"
-                                        android:text="여긴 닉네임"
-                                        android:textAppearance="@style/TextAppearance.MaterialComponents.Headline5"
-                                        android:textColor="#555555" />
-
-                                </LinearLayout>
-
-                                <LinearLayout
-                                    android:layout_marginLeft="16dp"
-                                    android:layout_marginRight="16dp"
-                                    android:layout_marginBottom="16dp"
-                                    android:layout_marginTop="16dp"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:layout_gravity="center_vertical"
-                                    android:gravity="center_vertical"
-                                    android:orientation="horizontal">
-
-                                    <LinearLayout
-                                        android:layout_width="0dp"
-                                        android:layout_height="wrap_content"
-                                        android:layout_weight="1"
-                                        android:layout_gravity="center"
-                                        android:gravity="center"
-                                        android:orientation="vertical">
-
-                                        <TextView
-                                            android:layout_width="wrap_content"
-                                            android:layout_height="wrap_content"
-                                            android:text="아이템"
-                                            android:textSize="16dp"
-                                            android:textColor="#777777" />
-
-                                        <TextView
-                                            android:id="@+id/item"
-                                            android:layout_width="wrap_content"
-                                            android:layout_height="wrap_content"
-                                            android:layout_marginTop="8dp"
-                                            android:layout_marginBottom="8dp"
-                                            android:text="ㅇㅇ"
-                                            android:textSize="20dp"
-                                            android:textColor="#555555" />
-
-                                    </LinearLayout>
-
-                                    <LinearLayout
-                                        android:layout_width="0dp"
-                                        android:layout_height="wrap_content"
-                                        android:layout_weight="1"
-                                        android:layout_gravity="center"
-                                        android:gravity="center"
-                                        android:orientation="vertical">
-
-                                        <TextView
-                                            android:layout_width="wrap_content"
-                                            android:layout_height="wrap_content"
-                                            android:text="원정대"
-                                            android:textSize="16dp"
-                                            android:textColor="#777777" />
-
-                                        <TextView
-                                            android:id="@+id/expedition"
-                                            android:layout_width="wrap_content"
-                                            android:layout_height="wrap_content"
-                                            android:layout_marginTop="8dp"
-                                            android:layout_marginBottom="8dp"
-                                            android:text="LV.9"
-                                            android:textSize="20dp"
-                                            android:textColor="#555555" />
-
-                                    </LinearLayout>
-
-                                    <LinearLayout
-                                        android:layout_width="0dp"
-                                        android:layout_height="wrap_content"
-                                        android:layout_weight="1"
-                                        android:layout_gravity="center"
-                                        android:gravity="center"
-                                        android:orientation="vertical">
-
-                                        <TextView
-                                            android:layout_width="wrap_content"
-                                            android:layout_height="wrap_content"
-                                            android:text="PVP"
-                                            android:textSize="16dp"
-                                            android:textColor="#777777" />
-
-                                        <TextView
-                                            android:id="@+id/pvp"
-                                            android:layout_width="wrap_content"
-                                            android:layout_height="wrap_content"
-                                            android:layout_marginTop="8dp"
-                                            android:layout_marginBottom="8dp"
-                                            android:text="20급"
-                                            android:textSize="20dp"
-                                            android:textColor="#555555" />
-
-                                    </LinearLayout>
-
-                                </LinearLayout>
-
-                            </LinearLayout>
-
-                        </com.google.android.material.card.MaterialCardView>
-
-                        <com.google.android.material.card.MaterialCardView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:clickable="true"
-                            android:foreground="?attr/selectableItemBackground"
-                            app:cardCornerRadius="20dp"
-                            app:cardElevation="10dp"
-                            android:layout_marginLeft="16dp"
-                            android:layout_marginRight="16dp"
-                            android:layout_marginBottom="16dp">
-
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="match_parent"
-                                android:orientation="vertical">
-
-                                <LinearLayout
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:layout_gravity="center_vertical"
-                                    android:gravity="center_vertical"
-                                    android:orientation="horizontal">
-
-                                    <TextView
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:layout_marginLeft="24dp"
-                                        android:layout_marginTop="24dp"
-                                        android:layout_marginBottom="24dp"
-                                        android:text="기본능력"
-                                        android:textAppearance="@style/TextAppearance.MaterialComponents.Headline5"
-                                        android:textColor="#555555" />
-
-                                </LinearLayout>
-
-                                <androidx.recyclerview.widget.RecyclerView
-                                    android:id="@+id/ability_basic"
+                                <RelativeLayout
                                     android:layout_width="match_parent"
                                     android:layout_height="wrap_content">
 
-                                </androidx.recyclerview.widget.RecyclerView>
+                                    <com.google.android.gms.ads.AdView xmlns:ads="http://schemas.android.com/apk/res-auto"
+                                        android:id="@+id/adView"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_alignParentBottom="true"
+                                        android:layout_centerHorizontal="true"
+                                        ads:adSize="BANNER"
+                                        ads:adUnitId="ca-app-pub-8885000207073232/2682907502"></com.google.android.gms.ads.AdView>
 
-                            </LinearLayout>
+                                </RelativeLayout>
 
-                        </com.google.android.material.card.MaterialCardView>
+                            </com.google.android.material.card.MaterialCardView>
 
-                        <com.google.android.material.card.MaterialCardView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:clickable="true"
-                            android:foreground="?attr/selectableItemBackground"
-                            app:cardCornerRadius="20dp"
-                            app:cardElevation="10dp"
-                            android:layout_marginLeft="16dp"
-                            android:layout_marginRight="16dp"
-                            android:layout_marginBottom="16dp">
-
-                            <LinearLayout
+                            <com.google.android.material.card.MaterialCardView
                                 android:layout_width="match_parent"
-                                android:layout_height="match_parent"
-                                android:orientation="vertical">
+                                android:layout_height="wrap_content"
+                                android:layout_marginLeft="16dp"
+                                android:layout_marginRight="16dp"
+                                android:layout_marginBottom="16dp"
+                                android:clickable="true"
+                                android:foreground="?attr/selectableItemBackground"
+                                app:cardCornerRadius="20dp"
+                                app:cardElevation="10dp">
 
                                 <LinearLayout
                                     android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:layout_gravity="center_vertical"
-                                    android:gravity="center_vertical"
-                                    android:orientation="horizontal">
+                                    android:layout_height="match_parent"
+                                    android:orientation="vertical">
 
-                                    <TextView
-                                        android:layout_width="wrap_content"
+                                    <LinearLayout
+                                        android:layout_width="match_parent"
                                         android:layout_height="wrap_content"
-                                        android:layout_marginLeft="24dp"
-                                        android:layout_marginTop="24dp"
-                                        android:layout_marginBottom="24dp"
-                                        android:text="전투능력"
-                                        android:textAppearance="@style/TextAppearance.MaterialComponents.Headline5"
-                                        android:textColor="#555555" />
+                                        android:layout_gravity="center_vertical"
+                                        android:gravity="center_vertical"
+                                        android:orientation="horizontal">
+
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:layout_marginLeft="24dp"
+                                            android:layout_marginTop="24dp"
+                                            android:layout_marginBottom="24dp"
+                                            android:text="기본능력"
+                                            android:textAppearance="@style/TextAppearance.MaterialComponents.Headline5"
+                                            android:textColor="#555555" />
+
+                                    </LinearLayout>
+
+                                    <!--<ExpandableListView-->
+                                    <!--android:id="@+id/ability_basic"-->
+                                    <!--android:layout_width="match_parent"-->
+                                    <!--android:layout_height="wrap_content">-->
+
+                                    <!--</ExpandableListView>-->
+
+                                    <androidx.recyclerview.widget.RecyclerView
+                                        android:id="@+id/ability_basic"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content">
+
+                                    </androidx.recyclerview.widget.RecyclerView>
 
                                 </LinearLayout>
 
-                                <androidx.recyclerview.widget.RecyclerView
-                                    android:id="@+id/ability_battle"
+                            </com.google.android.material.card.MaterialCardView>
+
+                            <com.google.android.material.card.MaterialCardView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginLeft="16dp"
+                                android:layout_marginRight="16dp"
+                                android:layout_marginBottom="16dp"
+                                android:clickable="true"
+                                android:foreground="?attr/selectableItemBackground"
+                                app:cardCornerRadius="20dp"
+                                app:cardElevation="10dp">
+
+                                <LinearLayout
                                     android:layout_width="match_parent"
-                                    android:layout_height="wrap_content">
+                                    android:layout_height="match_parent"
+                                    android:orientation="vertical">
 
-                                </androidx.recyclerview.widget.RecyclerView>
+                                    <LinearLayout
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:layout_gravity="center_vertical"
+                                        android:gravity="center_vertical"
+                                        android:orientation="horizontal">
 
-                            </LinearLayout>
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:layout_marginLeft="24dp"
+                                            android:layout_marginTop="24dp"
+                                            android:layout_marginBottom="24dp"
+                                            android:text="전투능력"
+                                            android:textAppearance="@style/TextAppearance.MaterialComponents.Headline5"
+                                            android:textColor="#555555" />
 
-                        </com.google.android.material.card.MaterialCardView>
+                                    </LinearLayout>
 
-                    </LinearLayout>
+                                    <androidx.recyclerview.widget.RecyclerView
+                                        android:id="@+id/ability_battle"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content">
 
-                </androidx.core.widget.NestedScrollView>
+                                    </androidx.recyclerview.widget.RecyclerView>
 
-            </RelativeLayout>
+                                </LinearLayout>
 
-            <com.google.android.gms.ads.AdView xmlns:ads="http://schemas.android.com/apk/res-auto"
-                android:id="@+id/adView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentBottom="true"
-                android:layout_centerHorizontal="true"
-                ads:adSize="BANNER"
-                ads:adUnitId="ca-app-pub-8885000207073232/2682907502"></com.google.android.gms.ads.AdView>
+                            </com.google.android.material.card.MaterialCardView>
+
+                        </LinearLayout>
+
+                    </androidx.core.widget.NestedScrollView>
+
+                </RelativeLayout>
+
+            </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
         </RelativeLayout>
 

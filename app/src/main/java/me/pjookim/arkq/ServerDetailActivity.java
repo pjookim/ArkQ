@@ -87,7 +87,6 @@ public class ServerDetailActivity extends AppCompatActivity {
 
         mInterstitialAd = new InterstitialAd(this);
         mInterstitialAd.setAdUnitId("ca-app-pub-8885000207073232/5350271162");
-//        mInterstitialAd.setAdUnitId("ca-app-pub-3940256099942544/1033173712");
         mInterstitialAd.loadAd(new AdRequest.Builder().build());
 
         serverId = getIntent().getStringExtra("serverId");
@@ -276,28 +275,6 @@ public class ServerDetailActivity extends AppCompatActivity {
                         Log.i("아 제발ㅠㅠ", t.toString());
                     }
                 });
-
-
-//                TimeResultDialog dialog = new TimeResultDialog(ServerDetailActivity.this);
-//                dialog.show();
-
-//                Log.i("alarm", "setAlarm");
-//                AlarmManager am = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
-//                Intent intent = new Intent(ServerDetailActivity.this, AlarmReceiver.class);   //AlarmReceiver.class이클레스는 따로 만들꺼임 알람이 발동될때 동작하는 클레이스임
-//
-//                PendingIntent sender = PendingIntent.getBroadcast(ServerDetailActivity.this, 0, intent, 0);
-//
-//                Calendar calendar = Calendar.getInstance();
-//                //알람시간 calendar에 set해주기
-//
-//                Log.i("resultTime", String.valueOf(resultTime.getHours()) + "시 " + String.valueOf(resultTime.getMinutes()) + "분");
-//                calendar.set(calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DATE), resultTime.getHours(),resultTime.getMinutes());
-//                calendar.set(Calendar.SECOND, 0);
-//
-//                //알람 예약
-//                //am.set(AlarmManager.RTC, calendar.getTimeInMillis(), sender);//이건 한번 알람
-//                am.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), 24*60*60*1000, sender);//이건 여러번 알람 24*60*60*1000 이건 하루에한번 계속 알람한다는 뜻.
-//                Toast.makeText(ServerDetailActivity.this,"시간설정:"+ Integer.toString(calendar.get(calendar.HOUR_OF_DAY))+":"+Integer.toString(calendar.get(calendar.MINUTE)),Toast.LENGTH_LONG).show();
             }
         });
     }

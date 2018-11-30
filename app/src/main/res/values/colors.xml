@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#e84a5f</color>
+    <color name="colorPrimary">#6046c7</color>
     <color name="colorPrimaryDark">#cd394d</color>
-    <color name="colorAccent">#D81B60</color>
+    <color name="colorAccent">#6046c7</color>
     <color name="red">#e74c3c</color>
     <color name="green">#16a085</color>
     <color name="yellow">#f1c40f</color>
+    <color name="ark">#6046c7</color>
 </resources>

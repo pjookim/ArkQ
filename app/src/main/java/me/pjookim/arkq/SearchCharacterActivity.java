@@ -2,24 +2,33 @@ package me.pjookim.arkq;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
-import android.graphics.Color;
+import android.media.Image;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.TimePicker;
 
+import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdSize;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.InterstitialAd;
 import com.google.android.gms.ads.MobileAds;
 import com.google.firebase.database.DatabaseReference;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
+import com.robinhood.ticker.TickerUtils;
+import com.robinhood.ticker.TickerView;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -27,20 +36,26 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
-import java.text.DecimalFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.cardview.widget.CardView;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
-public class SearchCharacter extends AppCompatActivity {
+public class SearchCharacterActivity extends AppCompatActivity {
 
     List<Integer> queues = new ArrayList<>();
     List<String> timestamp = new ArrayList<>();
@@ -53,28 +68,84 @@ public class SearchCharacter extends AppCompatActivity {
     String itemLevel;
     String expeditionLevel;
     String pvpLevel;
+    TextView rankText;
     TextView nicknameText;
     TextView itemText;
     TextView expeditionText;
     TextView pvpText;
+    String resultRank;
     ImageView profileImage;
     RecyclerView basicAbilityView;
     RecyclerView battleAbilityView;
+    Boolean isUser;
     private DatabaseReference serverRef;
     private AdView mAdView;
     private InterstitialAd mInterstitialAd;
     private ArrayList<AbilityItem> basicAbility = new ArrayList<>();
     private ArrayList<AbilityItem> battleAbility = new ArrayList<>();
 
-    Boolean isUser;
+    CardView characterProfileCard;
+    CardView adCard;
+    CardView noCharacterCard;
+    CardView rankingCard;
+
+    Retrofit retrofit;
+    CharacterRank apiService;
+
+    SwipeRefreshLayout swipeRefreshLayout;
+
+    TickerView rank1;
+    TickerView rank2;
+
+    ImageView aboutRank;
+    ImageView rankImage;
+
+    int cnt;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search_character);
 
+        rankText = (TextView) findViewById(R.id.rank_name);
+        rankImage = (ImageView) findViewById(R.id.rank_image);
+
+        aboutRank = (ImageView) findViewById(R.id.about_rank);
+        aboutRank.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                AboutRankDialog customDialog = new AboutRankDialog(SearchCharacterActivity.this);
+                customDialog.callFunction();
+            }
+        });
+
+        rankingCard = (CardView) findViewById(R.id.ranking);
+
+        rank1 = findViewById(R.id.rank1);
+        rank1.setCharacterLists(TickerUtils.provideNumberList());
+
+        rank1.setText("0");
+        rank2 = findViewById(R.id.rank2);
+        rank2.setCharacterLists(TickerUtils.provideNumberList());
+        rank2.setText("%");
+
+        swipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.container);
+        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                new Character().execute();
+            }
+        });
+
         basicAbilityView = (RecyclerView) findViewById(R.id.ability_basic);
+
+
         battleAbilityView = (RecyclerView) findViewById(R.id.ability_battle);
+
+        characterProfileCard = (CardView) findViewById(R.id.character_profile);
+        adCard = (CardView) findViewById(R.id.ad_card);
+
+        noCharacterCard = (CardView) findViewById(R.id.no_character);
 
         profileImage = (ImageView) findViewById(R.id.profile_image);
         nicknameText = (TextView) findViewById(R.id.nickname);
@@ -106,11 +177,11 @@ public class SearchCharacter extends AppCompatActivity {
         TextView toolbarTitle = (TextView) findViewById(R.id.toolbar_title);
         toolbarTitle.setText("Ark Q");
 
-        Retrofit retrofit = new Retrofit.Builder()
+        retrofit = new Retrofit.Builder()
                 .addConverterFactory(GsonConverterFactory.create())
-                .baseUrl(ServerDetail.BASEURL)
+                .baseUrl(CharacterRank.BASEURL)
                 .build();
-        ServerDetail apiService = retrofit.create(ServerDetail.class);
+        apiService = retrofit.create(CharacterRank.class);
         long now = System.currentTimeMillis();
         Date date = new Date(now);
         sdf = new SimpleDateFormat("yyyyMMdd HHmmss");
@@ -122,8 +193,8 @@ public class SearchCharacter extends AppCompatActivity {
         searchButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(SearchCharacter.this, SearchCharacter.class);
-                if(searchCharacter.getText().length()>0) {
+                Intent intent = new Intent(SearchCharacterActivity.this, SearchCharacterActivity.class);
+                if (searchCharacter.getText().length() > 0) {
                     intent.putExtra("character", searchCharacter.getText().toString());
                     Log.i("a", searchCharacter.getText().toString());
                     startActivity(intent);
@@ -132,22 +203,65 @@ public class SearchCharacter extends AppCompatActivity {
             }
         });
 
+        searchCharacter.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                switch (actionId) {
+                    case EditorInfo.IME_ACTION_SEARCH:
+                        Intent intent = new Intent(SearchCharacterActivity.this, SearchCharacterActivity.class);
+                        if (searchCharacter.getText().length() > 0) {
+                            intent.putExtra("character", searchCharacter.getText().toString());
+                            Log.i("a", searchCharacter.getText().toString());
+                            startActivity(intent);
+                        }
+                        break;
+                    default:
+                        return false;
+                }
+                return true;
+            }
+        });
+
         new Character().execute();
+
+        mAdView.setAdListener(new AdListener() {
+            @Override
+            public void onAdLoaded() {
+                adCard.setVisibility(View.VISIBLE);
+            }
+
+            @Override
+            public void onAdFailedToLoad(int errorCode) {
+                // Code to be executed when an ad request fails.
+            }
+
+            @Override
+            public void onAdOpened() {
+                // Code to be executed when an ad opens an overlay that
+                // covers the screen.
+            }
+
+            @Override
+            public void onAdLeftApplication() {
+                // Code to be executed when the user has left the app.
+            }
+
+            @Override
+            public void onAdClosed() {
+                // Code to be executed when when the user is about to return
+                // to the app after tapping on an ad.
+            }
+        });
     }
 
     private class Character extends AsyncTask<Void, Void, Void> {
-        private ProgressDialog progressDialog;
 
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
-
-            progressDialog = new ProgressDialog(SearchCharacter.this);
-            progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-            progressDialog.setMessage("잠시 기다려 주세요.");
-            progressDialog.show();
-
             basicAbility.clear();
+            battleAbility.clear();
+            swipeRefreshLayout.setRefreshing(true);
         }
 
         @Override
@@ -155,7 +269,7 @@ public class SearchCharacter extends AppCompatActivity {
             try {
                 Document doc = Jsoup.connect("http://lostark.game.onstove.com/Profile/Character/" + character).get();
                 Elements profileCharacter = doc.select("div[class=profile-character]");
-                if(!profileCharacter.isEmpty()) {
+                if (!profileCharacter.isEmpty()) {
                     isUser = true;
                     nickname = profileCharacter.select("h3").text();
                     Log.i("nickname", nickname);
@@ -173,8 +287,17 @@ public class SearchCharacter extends AppCompatActivity {
                         if (!elem.select("span").isEmpty()) {
                             String ability = elem.select("span").get(0).text();
                             String value = elem.select("span").get(1).text();
-                            basicAbility.add(new AbilityItem(ability, value));
+                            Elements ulBasicAbilityTooltip = elem.select("div[class=profile-ability-tooltip]>ul").select("li");
+
+                            List<String> temp = new ArrayList<String>();
+                            for (Element tooltip : ulBasicAbilityTooltip) {
+                                if (!tooltip.text().isEmpty()) {
+                                    temp.add(tooltip.text());
+                                }
+                            }
+                            basicAbility.add(new AbilityItem(ability, value, temp));
                         }
+
                     }
 
                     Elements ulBattleAbility = doc.select("div[class=profile-ability-battle]>ul").select("li");
@@ -183,13 +306,21 @@ public class SearchCharacter extends AppCompatActivity {
                         if (!elem.select("span").isEmpty()) {
                             String ability = elem.select("span").get(0).text();
                             String value = elem.select("span").get(1).text();
-                            battleAbility.add(new AbilityItem(ability, value));
+                            Elements ulBattleAbilityTooltip = elem.select("div[class=profile-ability-tooltip]>ul").select("li");
+
+                            List<String> temp = new ArrayList<String>();
+                            for (Element tooltip : ulBattleAbilityTooltip) {
+                                if (!tooltip.text().isEmpty()) {
+                                    temp.add(tooltip.text());
+                                }
+                            }
+                            battleAbility.add(new AbilityItem(ability, value, temp));
                         }
                     }
                     Log.d("profileCharacter", profileCharacter.toString());
                 } else {
                     Log.d("이건 없음", "ㅇㅇㅠㅠ");
-                    isUser=false;
+                    isUser = false;
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -199,7 +330,50 @@ public class SearchCharacter extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(Void result) {
-            if(isUser) {
+            if (isUser) {
+                Call<JsonObject> call = apiService.getRanking(nickname, itemLevel.substring(3));
+                cnt=0;
+                call.enqueue(new Callback<JsonObject>() {
+                    @Override
+                    public void onResponse(@NonNull Call<JsonObject> call, @NonNull Response<JsonObject> response) {
+                        if (response.isSuccessful()) {
+                            JsonObject object = response.body();
+                            if (object != null) {
+                                resultRank = object.get("rank").toString().replaceAll("\"", "");
+                                if(!resultRank.equals("-1")) {
+                                    String[] data = resultRank.split("\\.");
+                                    rank1.setText(data[0]);
+                                    rank2.setText("." + data[1] + "%");
+                                    if (Integer.parseInt(data[0]) < 2) {
+                                        rankText.setText("다이아");
+                                        rankImage.setImageDrawable(getResources().getDrawable(R.drawable.dia));
+                                    } else if (Integer.parseInt(data[0]) < 8) {
+                                        rankText.setText("플래티넘");
+                                        rankImage.setImageDrawable(getResources().getDrawable(R.drawable.platinum));
+                                    } else if (Integer.parseInt(data[0]) < 30) {
+                                        rankText.setText("골드");
+                                        rankImage.setImageDrawable(getResources().getDrawable(R.drawable.gold));
+                                    } else if (Integer.parseInt(data[0]) < 60) {
+                                        rankText.setText("실버");
+                                        rankImage.setImageDrawable(getResources().getDrawable(R.drawable.silver));
+                                    } else {
+                                        rankText.setText("브론즈");
+                                        rankImage.setImageDrawable(getResources().getDrawable(R.drawable.bronze));
+                                    }
+                                    rankingCard.setVisibility(View.VISIBLE);
+                                }
+                                swipeRefreshLayout.setRefreshing(false);
+
+                            }
+                            Log.i("rank", resultRank);
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(@NonNull Call<JsonObject> call, @NonNull Throwable t) {
+                        Log.i("아 제발ㅠㅠ", t.toString());
+                    }
+                });
                 BasicAdapter basicAdapter = new BasicAdapter(basicAbility);
                 basicAbilityView.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
                 basicAbilityView.setAdapter(basicAdapter);
@@ -207,6 +381,8 @@ public class SearchCharacter extends AppCompatActivity {
                 BattleAdapter battleAdapter = new BattleAdapter(battleAbility);
                 battleAbilityView.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
                 battleAbilityView.setAdapter(battleAdapter);
+
+                    Log.i("랭킹랭킹", "ㅇㅇ");
 
                 nicknameText.setText(nickname);
                 itemText.setText(itemLevel);
@@ -266,8 +442,10 @@ public class SearchCharacter extends AppCompatActivity {
                         Log.i("띠용", "엥 이러면 안돼ㅠㅠ");
                     }
                 }
+                characterProfileCard.setVisibility(View.VISIBLE);
             } else {
-                Log.i("이건 없음", "ㅇㅇ");
+                noCharacterCard.setVisibility(View.VISIBLE);
+                swipeRefreshLayout.setRefreshing(false);
             }
             //ArraList를 인자로 해서 어답터와 연결한다.
 //            MyAdapter myAdapter = new MyAdapter(list);
@@ -275,8 +453,7 @@ public class SearchCharacter extends AppCompatActivity {
 //            recyclerView.setLayoutManager(layoutManager);
 //            recyclerView.setAdapter(myAdapter);
 //
-            progressDialog.dismiss();
-            //Glide.with(SearchCharacter.this).load("http://arkq.cafe24app.com/icons/" + charClass + ".png").into(profileImage);
+            //Glide.with(SearchCharacterActivity.this).load("http://arkq.cafe24app.com/icons/" + charClass + ".png").into(profileImage);
 //
 //            long now = System.currentTimeMillis();
 //            Date date = new Date(now);
@@ -318,6 +495,17 @@ public class SearchCharacter extends AppCompatActivity {
         public void onBindViewHolder(ViewHolder holder, final int position) {
             holder.ability.setText(basicAbility.get(position).getAbility());
             holder.value.setText(basicAbility.get(position).getValue());
+            holder.listItem.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    AbilityDetailDialog customDialog = new AbilityDetailDialog(SearchCharacterActivity.this);
+
+                    // 커스텀 다이얼로그를 호출한다.
+                    // 커스텀 다이얼로그의 결과를 출력할 TextView를 매개변수로 같이 넘겨준다.
+
+                    customDialog.callFunction(basicAbility.get(position).getAbility(), basicAbility.get(position).getDescription());
+                }
+            });
         }
 
         @Override
@@ -325,6 +513,7 @@ public class SearchCharacter extends AppCompatActivity {
             return mList.size();
         }
     }
+
     class BattleAdapter extends RecyclerView.Adapter<ViewHolder> {
         private final ArrayList<AbilityItem> mList;
 
@@ -342,6 +531,17 @@ public class SearchCharacter extends AppCompatActivity {
         public void onBindViewHolder(ViewHolder holder, final int position) {
             holder.ability.setText(battleAbility.get(position).getAbility());
             holder.value.setText(battleAbility.get(position).getValue());
+            holder.listItem.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    AbilityDetailDialog customDialog = new AbilityDetailDialog(SearchCharacterActivity.this);
+
+                    // 커스텀 다이얼로그를 호출한다.
+                    // 커스텀 다이얼로그의 결과를 출력할 TextView를 매개변수로 같이 넘겨준다.
+
+                    customDialog.callFunction(battleAbility.get(position).getAbility(), battleAbility.get(position).getDescription());
+                }
+            });
         }
 
         @Override
